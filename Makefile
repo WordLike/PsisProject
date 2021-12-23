@@ -9,10 +9,10 @@ compile_sserver: sserver
 
 compile_sclient: sclient
 
-run_server: sserver
+run_sserver: sserver
 	./sserver
 
-run_client: sclient
+run_sclient: sclient
 	 ./sclient
 
 
@@ -20,16 +20,16 @@ run_client: sclient
 sserver: sserver.o
 	$(HOST_CC) sserver.o  -o sserver $(HOST_CC_FLAGS)
 
-sclient: client.o
+sclient: sclient.o
 	$(HOST_CC) sclient.o  -o sclient $(HOST_CC_FLAGS)
 
 
 
-sserver.o: super_pong_server.c super_pong.h
-	$(HOST_CC) -c super_pong_server.c -o sserver.o  $(HOST_CC_FLAGS)
+sserver.o: server_super_pong.c super_pong.h
+	$(HOST_CC) -c server_super_pong.c -o sserver.o  $(HOST_CC_FLAGS)
 
-client.o: human-control-client.c remote-char.h
-	$(HOST_CC) -c super_pong_client.c -o sclient.o  $(HOST_CC_FLAGS)
+sclient.o: client_super_pong.c super_pong.h
+	$(HOST_CC) -c client_super_pong.c -o sclient.o  $(HOST_CC_FLAGS)
 
 clean:
 	rm -f *.o *~ sserver sclient
