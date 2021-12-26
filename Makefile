@@ -13,7 +13,7 @@ run_sserver: sserver
 	./sserver
 
 run_sclient: sclient
-	 ./sclient
+	 ./sclient $(adr)
 
 
 
