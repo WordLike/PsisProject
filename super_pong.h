@@ -1,6 +1,6 @@
 #ifndef SUPER
 #define SUPER
-
+#define SOCK_PORT 5000
 #define WINDOW_SIZE 20
 #define PADLE_SIZE 2
 #define SOCK_ADDRESS "/tmp/sock_16"

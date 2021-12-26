@@ -10,7 +10,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <time.h>
-
+#include<netinet/in.h>
+#include<arpa/inet.h>
 
 
 void new_paddle (paddle_position_t * paddle, int legth){
@@ -119,11 +120,13 @@ void init(ppos **p, player_message *m, server_message *s){
     
 }
 
-bool valid_move(int length, ppos *p, int player_id, paddle_position_t paddle){
+bool valid_move(int length, ppos *p, int player_id, paddle_position_t paddle, ball_position_t ball){
 
     if(paddle.y<=0||paddle.y>=WINDOW_SIZE-1||paddle.x-length<=0||paddle.x+length>=WINDOW_SIZE-1){
         return 0;
     }
+
+    if((paddle.x+length)>=ball.x &&(paddle.x-length)<=ball.x && paddle.y==ball.y) return 0;
     
     for(int i=0; i<MAX_PLAYERS;i++){
         if(i!=player_id && p[i].x!=-1){
@@ -139,10 +142,11 @@ bool valid_move(int length, ppos *p, int player_id, paddle_position_t paddle){
 paddle_position_t paddle;
 ball_position_t ball;
 
-int main(){
+int main(int argc, char *argv[]){
     srand(time(0));
     ppos *p;//players in the game
     int t;//receive returns from functions with useless returns
+
     player_message m;
     server_message s;
     paddle_position_t paddle;
@@ -150,25 +154,28 @@ int main(){
 
     init(&p,&m,&s);
 
-    int sock_fd;
-    struct sockaddr_un local_addr;
-    local_addr.sun_family = AF_UNIX;
-    strcpy(local_addr.sun_path, SOCK_ADDRESS);
-    sock_fd= socket(AF_UNIX, SOCK_DGRAM, 0);
-    unlink(SOCK_ADDRESS);
-    struct sockaddr_un client_addr;
-    socklen_t client_addr_size = sizeof(struct sockaddr_un);
-
+    int sock_fd= socket(AF_INET, SOCK_DGRAM, 0);
     if (sock_fd == -1){
         perror("socket: ");
         exit(-1);
     }
+
+    struct sockaddr_in local_addr;
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_port = htons(SOCK_PORT);
+    local_addr.sin_addr.s_addr = INADDR_ANY;
+
+    struct sockaddr_in client_addr;
+    socklen_t client_addr_size = sizeof(struct sockaddr_in);
+
     int err = bind(sock_fd, (struct sockaddr *)&local_addr,
-                   sizeof(local_addr));
+                            sizeof(local_addr));
     if(err == -1) {
         perror("bind");
         exit(-1);
     }
+
+
 
     place_ball_random(&ball);
     s.ball.x = ball.x;
@@ -180,6 +187,12 @@ int main(){
         
         t = recvfrom(sock_fd, &m, sizeof(m), 0, ( struct sockaddr *)&client_addr, &client_addr_size);
 
+        char remote_addr_str[100];
+        int remote_port = ntohs(client_addr.sin_port);
+        if (inet_ntop(AF_INET, &client_addr.sin_addr, remote_addr_str, 100) == NULL){
+            perror("converting remote addr: ");
+        }
+
         if(m.player_id==-1)//is a connect message
         {
             s.player_id=select_free_player(p);
@@ -189,7 +202,7 @@ int main(){
                     new_paddle(&paddle, PADLE_SIZE);
                     
                 }
-                while(!valid_move(PADLE_SIZE,p,s.player_id,paddle));
+                while(!valid_move(PADLE_SIZE,p,s.player_id,paddle,ball));
                 player_num++;
                 p[s.player_id].x=paddle.x;
                 p[s.player_id].y=paddle.y;
@@ -211,7 +224,7 @@ int main(){
                 
                 moove_paddle(&paddle, m.move);
 
-                if(valid_move(PADLE_SIZE,p,s.player_id,paddle)){
+                if(valid_move(PADLE_SIZE,p,s.player_id,paddle,ball)){
                     p[s.player_id].x=paddle.x;
                     p[s.player_id].y=paddle.y;
                     

@@ -9,7 +9,8 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-
+#include<netinet/in.h>
+#include<arpa/inet.h>
 WINDOW * message_win;
 
 void draw_paddle(WINDOW *win, paddle_position_t * paddle, int delete, bool player){
@@ -73,31 +74,27 @@ void scoreboard(WINDOW *win, server_message s){
 
 
 
-int main()
+int main(int argc, char *argv[])
 {
-    char str[100];
-
-    int sock_fd= socket(AF_UNIX, SOCK_DGRAM, 0);
+    
+    int sock_fd= socket(AF_INET, SOCK_DGRAM, 0);
     if (sock_fd == -1){
         perror("socket: ");
         exit(-1);
     }
-
-    struct sockaddr_un local_client_addr;
-    local_client_addr.sun_family = AF_UNIX;
-    sprintf(local_client_addr.sun_path, "%s_%d", SOCK_ADDRESS, getpid());
-
-    unlink(local_client_addr.sun_path);
-    int err = bind(sock_fd, (struct sockaddr *)&local_client_addr,
-                            sizeof(local_client_addr));
-    if(err == -1) {
-        perror("bind");
+    if(argc<2){
+        printf("No Adress provided\n");
         exit(-1);
     }
+    char* str=argv[1];
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SOCK_PORT);
 
-    struct sockaddr_un server_addr;
-    server_addr.sun_family = AF_UNIX;
-    strcpy(server_addr.sun_path, SOCK_ADDRESS);
+    if( inet_pton(AF_INET, str, &server_addr.sin_addr) < 1){
+        printf("no valid address: \n");
+        exit(-1);
+    }
 
     player_message m;
     server_message s;
