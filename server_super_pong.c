@@ -50,8 +50,8 @@ void moove_paddle (paddle_position_t * paddle, int direction){
 }
 
 void place_ball_random(ball_position_t * ball){
-    ball->x = rand() % (WINDOW_SIZE-1)+1 ;
-    ball->y = rand() % (WINDOW_SIZE-1)+1 ;
+    ball->x = rand() % (WINDOW_SIZE-2)+1 ;
+    ball->y = rand() % (WINDOW_SIZE-2)+1 ;
     ball->c = 'o';
     ball->up_hor_down = rand() % 3 -1; //  -1 up, 1 - down
     ball->left_ver_right = rand() % 3 -1 ; // 0 vertical, -1 left, 1 right
@@ -196,7 +196,6 @@ int main(int argc, char *argv[]){
         if(m.player_id==-1)//is a connect message
         {
             s.player_id=select_free_player(p);
-            printf("%i",s.player_id);
             if (s.player_id>=0){
                 do{
                     new_paddle(&paddle, PADLE_SIZE);
@@ -210,6 +209,7 @@ int main(int argc, char *argv[]){
             }
         }
         else{
+            s.player_id=m.player_id;
             if(m.move=='q'){//disconnect
                 p[s.player_id].x=-1;
                 p[s.player_id].y=-1;
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]){
                 player_num--;
             }
             else{
-                s.player_id=m.player_id;
+                
                 paddle.x=p[s.player_id].x;
                 paddle.y=p[s.player_id].y;
                 

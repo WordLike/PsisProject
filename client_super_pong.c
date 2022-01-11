@@ -62,21 +62,29 @@ void drawboard(WINDOW *win, server_message s, bool draw){
     
 }
 
-void scoreboard(WINDOW *win, server_message s){
+void scoreboard(WINDOW **win, server_message s){
     
+    werase(*win);
+    wrefresh(*win);
     int count=0;
-    for(int i=0;i<MAX_PLAYERS;i++) if(s.p[i].x>0) count++;
-
-    message_win = newwin(2+count*2, WINDOW_SIZE+10, WINDOW_SIZE, 0);
+    for(int i=0;i<MAX_PLAYERS;i++) if(s.p[i].x>0) count ++;
+    message_win = newwin(1+count*2, WINDOW_SIZE+10, WINDOW_SIZE, 0);
+    count = 0;
     box(message_win, 0 , 0);  
-
     for(int i=0;i<MAX_PLAYERS;i++){
-        if(i==s.player_id){
-           mvwprintw(message_win, 1+i*2,1,"P%i score %i <---",i+1,s.p[i].score);  
-        } 
-        else if((s.p[i].x>0))mvwprintw(message_win, 1+i*2,1,"P%i score %i",i+1,s.p[i].score);
+        if((s.p[i].x>0)){
+            if(i==s.player_id) mvwprintw(message_win, 1+(count++)*2,1,"P%i score %i <---",i+1,s.p[i].score);  
+            else mvwprintw(message_win, 1+(count++)*2,1,"P%i score %i",i+1,s.p[i].score);
+
+        }
+       
+        
     }
     wrefresh(message_win);
+
+    *win=message_win;
+   
+
     return;
 }
 
@@ -124,6 +132,7 @@ int main(int argc, char *argv[])
 	noecho();			/* Don't echo() while we do getch */
     /* creates a window and draws a border */
     WINDOW * my_win = newwin(WINDOW_SIZE, WINDOW_SIZE, 0, 0);
+    WINDOW * message_win = newwin(3, WINDOW_SIZE+10, WINDOW_SIZE, 0);
     box(my_win, 0 , 0); 
     wrefresh(my_win);
     keypad(my_win, true);
@@ -131,7 +140,7 @@ int main(int argc, char *argv[])
   
   
     drawboard(my_win,s,true);
-    scoreboard(message_win,s);
+    scoreboard(&message_win,s);
     
     int key = -1;
     while(key != 'q'){
@@ -142,7 +151,7 @@ int main(int argc, char *argv[])
             drawboard(my_win,s,false);
             t = recv(sock_fd, &s, sizeof(s), 0);
             drawboard(my_win,s,true);
-            scoreboard(message_win,s);
+            scoreboard(&message_win,s);
             
             
               
